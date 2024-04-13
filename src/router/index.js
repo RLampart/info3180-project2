@@ -10,52 +10,12 @@ const router = createRouter({
       component: HomeView
     },
     {
-      path: '/register',
-      name: 'register',
+      path: '/about',
+      name: 'about',
       // route level code-splitting
       // this generates a separate chunk (About.[hash].js) for this route
       // which is lazy-loaded when the route is visited.
-      component: () => import('../views/AboutView.vue')//Change later
-    },
-    {
-      path: '/login',
-      name: 'login',
-      // route level code-splitting
-      // this generates a separate chunk (About.[hash].js) for this route
-      // which is lazy-loaded when the route is visited.
-      component: () => import('../views/LoginView.vue')//Change later
-    },
-    {
-      path: '/logout',
-      name: 'logout',
-      // route level code-splitting
-      // this generates a separate chunk (About.[hash].js) for this route
-      // which is lazy-loaded when the route is visited.
-      component: () => import('../views/Logout.vue')//Change later
-    },
-    {
-      path: '/explore',
-      name: 'explore',
-      // route level code-splitting
-      // this generates a separate chunk (About.[hash].js) for this route
-      // which is lazy-loaded when the route is visited.
-      component: () => import('../views/ExploreView.vue')//Change later
-    },
-    {
-      path: '/users/{user_id}',
-      name: 'user',
-      // route level code-splitting
-      // this generates a separate chunk (About.[hash].js) for this route
-      // which is lazy-loaded when the route is visited.
-      component: () => import('../views/Logout.vue')//Change later
-    },
-    {
-      path: '/posts/new',
-      name: 'new_posts',
-      // route level code-splitting
-      // this generates a separate chunk (About.[hash].js) for this route
-      // which is lazy-loaded when the route is visited.
-      component: () => import('../views/Posts.vue')//Change later
+      component: () => import('../views/AboutView.vue')
     }
   ]
 })
