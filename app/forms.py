@@ -16,3 +16,8 @@ class Register(FlaskForm):
         FileRequired(message='Please upload movie poster'),
         FileAllowed(['jpg', 'png'], message='Only JPEG and PNG images are allowed.')
     ])
+
+
+class Login(FlaskForm):
+    username = StringField('Username', validators=[InputRequired()])
+    password = PasswordField('Password', validators=[InputRequired()])
