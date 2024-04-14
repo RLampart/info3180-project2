@@ -12,7 +12,20 @@ class Register(FlaskForm):
     email = EmailField('Email', validators=[InputRequired(), Email()])
     location = StringField('Location', validators=[InputRequired()])
     bio = TextAreaField('Biography', validators=[InputRequired()])
+    photo = FileField('Upload Photo', validators=[
+        FileRequired(message='Please upload profile photo'),
+        FileAllowed(['jpg', 'png'], message='Only JPEG and PNG images are allowed.')
+    ])
+
+
+class Login(FlaskForm):
+    username = StringField('Username', validators=[InputRequired()])
+    password = PasswordField('Password', validators=[InputRequired()])
+
+
+class NewPost(FlaskForm):
     photo = FileField('Upload Poster', validators=[
         FileRequired(message='Please upload movie poster'),
         FileAllowed(['jpg', 'png'], message='Only JPEG and PNG images are allowed.')
     ])
+    caption = TextAreaField('Caption', validators=[InputRequired()])
