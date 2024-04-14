@@ -21,3 +21,11 @@ class Register(FlaskForm):
 class Login(FlaskForm):
     username = StringField('Username', validators=[InputRequired()])
     password = PasswordField('Password', validators=[InputRequired()])
+
+
+class NewPost(FlaskForm):
+    photo = FileField('Upload Poster', validators=[
+        FileRequired(message='Please upload movie poster'),
+        FileAllowed(['jpg', 'png'], message='Only JPEG and PNG images are allowed.')
+    ])
+    caption = TextAreaField('Caption', validators=[InputRequired()])
