@@ -6,12 +6,13 @@ This file creates your application.
 """
 
 from flask import Flask, make_response, request, jsonify
-from app import app
+from app import app, db, login_manager
 from flask import render_template, request, redirect, url_for, flash, send_from_directory
 from app.forms import *
 from .models import *
+from flask_login import login_user, logout_user, current_user, login_required
 from werkzeug.utils import secure_filename
-from werkzeug.security import generate_password_hash
+from werkzeug.security import generate_password_hash, check_password_hash
 from app import app, db
 import os
 from flask_wtf.csrf import generate_csrf
@@ -32,7 +33,7 @@ def register():
     if form.validate_on_submit():
         username = form.username.data
         password = form.password.data
-        hashed_pw = generate_password_hash(password)
+        hashed_pw = generate_password_hash(password, method='pbkdf2:sha256')
         first_name = form.first_name.data
         last_name = form.last_name.data
         email = form.email.data
@@ -75,6 +76,48 @@ def register():
                     ]
         }
     return make_response(data,200)
+
+
+@app.route('/api/v1/auth/login', methods=['POST'])
+def login():
+    form = Login()
+    data = {}
+    if form.validate_on_submit():
+        username = form.username.data
+        password = form.password.data
+        user = User.query.filter_by(username=username).first()
+        if user:
+            print(user.password)
+            print(password)
+            print(check_password_hash(user.password,password))
+            if check_password_hash(user.password,password):
+                login_user(user)
+                data = {
+                    "message": f"{user.username} successfully logged in."
+                }
+            else:
+                data = {
+                    "message": f"{user.username}'s password is incorrect"
+                }
+        else:
+            data = {
+                    "message": f"Profile with username:{username} cannot be found"
+                }
+
+    else:
+        data = {
+            "errors":[
+                {error.split(" - ")[0]:error.split(" - ")[1]} for error in form_errors(form)
+                    ]
+        }
+    return make_response(data,200)
+
+
+@login_manager.user_loader
+def load_user(id):
+    return db.session.execute(db.select(User).filter_by(id=id)).scalar()
+
+
 ###
 # The functions below should be applicable to all Flask apps.
 ###
