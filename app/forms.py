@@ -12,8 +12,8 @@ class Register(FlaskForm):
     email = EmailField('Email', validators=[InputRequired(), Email()])
     location = StringField('Location', validators=[InputRequired()])
     bio = TextAreaField('Biography', validators=[InputRequired()])
-    photo = FileField('Upload Poster', validators=[
-        FileRequired(message='Please upload movie poster'),
+    photo = FileField('Upload Photo', validators=[
+        FileRequired(message='Please upload profile photo'),
         FileAllowed(['jpg', 'png'], message='Only JPEG and PNG images are allowed.')
     ])
 

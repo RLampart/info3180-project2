@@ -8,7 +8,7 @@ app = Flask(__name__)
 csrf = CSRFProtect(app)
 app.config.from_object(Config)
 db = SQLAlchemy(app)
-#app.config['WTF_CSRF_ENABLED'] = False #bypass CSRF validation 
+app.config['WTF_CSRF_ENABLED'] = False #bypass CSRF validation 
 
 migrate = Migrate(app, db) 
 from app import models
