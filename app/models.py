@@ -67,7 +67,7 @@ class User(db.Model):
     
     def __init__(self, username, password, firstname, lastname, email, location, biography, profile_photo):
         self.username = username
-        self.password = generate_password_hash(password)
+        self.password = password
         self.firstname = firstname
         self.lastname =  lastname
         self.email = email
@@ -76,6 +76,21 @@ class User(db.Model):
         self.profile_photo = profile_photo
         self.joined_on = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         
+    def is_authenticated(self):
+        return True
+
+    def is_active(self):
+        return True
+
+    def is_anonymous(self):
+        return False
+
+    def get_id(self):
+        try:
+            return unicode(self.id)  # python 2 support
+        except NameError:
+            return str(self.id)  # python 3 support
+
     def __repr__(self):
-        return "<User %r>" % self.username
+        return '<User %r>' % (self.username)
     
