@@ -32,6 +32,7 @@ def register():
     if form.validate_on_submit():
         username = form.username.data
         password = form.password.data
+        hashed_pw = generate_password_hash(password)
         first_name = form.first_name.data
         last_name = form.last_name.data
         email = form.email.data
@@ -45,7 +46,7 @@ def register():
             ))
         user = User(
         username = username,
-        password = generate_password_hash(password),
+        password = hashed_pw,
         firstname = first_name,
         lastname = last_name,
         email = email,
@@ -58,7 +59,7 @@ def register():
         data = {
             "message": "User successfully registered",
             "username": username,
-            "password": password,
+            "password": hashed_pw,
             "firstname": first_name,
             "lastname": last_name,
             "email": email,

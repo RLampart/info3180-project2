@@ -6,8 +6,8 @@ from werkzeug.security import generate_password_hash
 class Posts(db.Model):
     __tablename__ = 'posts'
     id = db.Column(db.Integer, primary_key = True)
-    caption = db.Column(db.String(120))
-    photo = db.Column(db.String(120))
+    caption = db.Column(db.String(255))
+    photo = db.Column(db.String(255))
     user_id = db.Column(db.Integer,nullable = False)
     created_on = db.Column(db.DateTime())
     
@@ -23,7 +23,7 @@ class Posts(db.Model):
         return '<Posts %r>' % self.id
     
 class Likes(db.Model) :
-    __tablename__ = 'tables'
+    __tablename__ = 'likes'
     
     id = db.Column(db.Integer, primary_key = True)
     post_id = db.Column(db.Integer,nullable = False)
@@ -55,14 +55,14 @@ class User(db.Model):
     __tablename__ = 'users' 
     
     id = db.Column(db.Integer(), primary_key = True)
-    username = db.Column(db.String(120), unique = True)
-    password = db.Column(db.String(120), nullable = False)
-    firstname = db.Column(db.String(120), nullable = False)
-    lastname = db.Column(db.String(120), nullable = False)
-    email = db.Column(db.String(120))
-    location = db.Column(db.String(120))
-    biography = db.Column(db.String(120))
-    profile_photo = db.Column(db.String(120))
+    username = db.Column(db.String(255), unique = True)
+    password = db.Column(db.String(255), nullable = False)
+    firstname = db.Column(db.String(255), nullable = False)
+    lastname = db.Column(db.String(255), nullable = False)
+    email = db.Column(db.String(255))
+    location = db.Column(db.String(255))
+    biography = db.Column(db.String(255))
+    profile_photo = db.Column(db.String(255))
     joined_on = db.Column(db.DateTime(), nullable = False)
     
     def __init__(self, username, password, firstname, lastname, email, location, biography, profile_photo):
