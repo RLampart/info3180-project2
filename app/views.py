@@ -113,6 +113,22 @@ def login():
     return make_response(data,200)
 
 
+@app.route("/api/v1/auth/logout")
+@login_required
+def logout():
+    data = {}
+    if current_user.is_active():
+        data = {
+            "message": f"{current_user.username} successfully logged out."
+            }
+        logout_user()
+    else:
+        data = {
+            "message": "No active users"
+            }
+    return make_response(data,200)
+
+
 @login_manager.user_loader
 def load_user(id):
     return db.session.execute(db.select(User).filter_by(id=id)).scalar()
