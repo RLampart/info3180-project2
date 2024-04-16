@@ -5,7 +5,8 @@ Werkzeug Documentation:  https://werkzeug.palletsprojects.com/
 This file creates your application.
 """
 
-from flask import Flask, make_response, request, jsonify
+
+from flask import jsonify, request, g, send_from_directory, url_for
 from app import app, db, login_manager
 from flask import render_template, request, redirect, url_for, flash, send_from_directory
 from app.forms import *
@@ -24,6 +25,42 @@ from time import time
 ###
 # Routing for your application.
 ###
+blocked_tokens = set()
+
+def requires_auth(f):
+  @wraps(f)
+  def decorated(*args, **kwargs):
+    auth = request.headers.get('Authorization', None) # or request.cookies.get('token', None)
+
+    if auth in blocked_tokens:
+        return jsonify({'code': 'blocked_token', 'description': 'This token can no longer be used'}), 401
+
+    if not auth:
+      return jsonify({'code': 'authorization_header_missing', 'description': 'Authorization header is expected'}), 401
+
+    parts = auth.split()
+
+    if parts[0].lower() != 'bearer':
+      return jsonify({'code': 'invalid_header', 'description': 'Authorization header must start with Bearer'}), 401
+    elif len(parts) == 1:
+      return jsonify({'code': 'invalid_header', 'description': 'Token not found'}), 401
+    elif len(parts) > 2:
+      return jsonify({'code': 'invalid_header', 'description': 'Authorization header must be Bearer + \s + token'}), 401
+
+    token = parts[1]
+    try:
+        payload = jwt.decode(token, app.config['SECRET_KEY'], algorithms=["HS256"])
+
+    except jwt.ExpiredSignatureError:
+        return jsonify({'code': 'token_expired', 'description': 'token is expired'}), 401
+    except jwt.DecodeError:
+        return jsonify({'code': 'token_invalid_signature', 'description': 'Token signature is invalid'}), 401
+
+    g.current_user = user = payload
+    return f(*args, **kwargs)
+
+  return decorated
+
 
 @app.route('/')
 def index():
@@ -134,24 +171,14 @@ def login():
         return jsonify(data), 500
 
 
-@app.route("/api/v1/auth/logout")
+@app.route("/api/v1/auth/logout", methods=['POST'])
+@requires_auth
 def logout():
-    data = {}
-    if current_user.is_active():
-        data = {
-            "message": f"{current_user.username} successfully logged out."
-            }
-        logout_user()
-    else:
-        data = {
-            "message": "No active users"
-            }
-    return make_response(data,200)
+    auth = request.headers.get('Authorization', None)
+    blocked_tokens.add(auth)
+    return jsonify({'message': 'User logged out successfully'}), 200
 
 
-@login_manager.user_loader
-def load_user(id):
-    return db.session.execute(db.select(User).filter_by(id=id)).scalar()
 
 
 ###
