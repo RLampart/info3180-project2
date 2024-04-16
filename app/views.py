@@ -17,7 +17,10 @@ from app import app, db
 import os
 from flask_wtf.csrf import generate_csrf
 from datetime import datetime
-
+import jwt
+from datetime import datetime, timedelta
+from functools import wraps
+from time import time
 ###
 # Routing for your application.
 ###
@@ -57,8 +60,7 @@ def register():
         )
         db.session.add(user)
         db.session.commit()
-        data = [
-            {
+        data =  {
             "message": "User successfully registered",
             "username": username,
             "password": hashed_pw,
@@ -70,18 +72,29 @@ def register():
             "profile_photo": photo_name,
             "joined_on": date_joined
         }
-        ]
-        return jsonify(data=data),201
+    
+        return jsonify(data),201
     else:
-        data = [
-            {
+        data = {
             "errors":[
                 {error.split(" - ")[0]:error.split(" - ")[1]} for error in form_errors(form)
                     ]
         }
-        ]
-        return jsonify(data=data),500
+        
+        return jsonify(data),500
 
+
+def generate_token(user):
+    timestamp = datetime.utcnow()
+    payload = {
+        "sub": user,
+        "iat": timestamp,
+        "exp": timestamp + timedelta(minutes=3)
+    }
+
+    token = jwt.encode(payload, app.config['SECRET_KEY'], algorithm='HS256')
+
+    return token
 
 @app.route('/api/v1/auth/login', methods=['POST'])
 def login():
@@ -92,22 +105,25 @@ def login():
         password = form.password.data
         user = User.query.filter_by(username=username).first()
         if user:
-            print(user.password)
-            print(password)
-            print(check_password_hash(user.password,password))
             if check_password_hash(user.password,password):
-                login_user(user)
                 data = {
-                    "message": f"{user.username} successfully logged in."
-                }
+                        "message": f"{user.username} successfully logged in.",
+                        "token": generate_token(user.username)
+                        }
+                     
+                return jsonify(data), 202
+
             else:
                 data = {
-                    "message": f"{user.username}'s password is incorrect"
+                    "message": "Username or password is incorrect"
                 }
+                
+                return jsonify(data), 401
         else:
-            data = {
-                    "message": f"Profile with username:{username} cannot be found"
+            data ={
+                    "message": "Username or password is incorrect"
                 }
+            return jsonify(data), 401
 
     else:
         data = {
@@ -115,11 +131,10 @@ def login():
                 {error.split(" - ")[0]:error.split(" - ")[1]} for error in form_errors(form)
                     ]
         }
-    return make_response(data,200)
+        return jsonify(data), 500
 
 
 @app.route("/api/v1/auth/logout")
-@login_required
 def logout():
     data = {}
     if current_user.is_active():
