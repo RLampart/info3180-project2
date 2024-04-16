@@ -57,7 +57,8 @@ def register():
         )
         db.session.add(user)
         db.session.commit()
-        data = {
+        data = [
+            {
             "message": "User successfully registered",
             "username": username,
             "password": hashed_pw,
@@ -69,13 +70,17 @@ def register():
             "profile_photo": photo_name,
             "joined_on": date_joined
         }
+        ]
+        return jsonify(data=data),201
     else:
-        data = {
+        data = [
+            {
             "errors":[
                 {error.split(" - ")[0]:error.split(" - ")[1]} for error in form_errors(form)
                     ]
         }
-    return make_response(data,200)
+        ]
+        return jsonify(data=data),500
 
 
 @app.route('/api/v1/auth/login', methods=['POST'])
