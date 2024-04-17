@@ -228,8 +228,32 @@ def get_posts(user_id):
     return jsonify(posts=posts), 200
 
 
+@app.route("/api/users/<user_id>/follow", methods=["POST"])
+def follow_user(user_id):
+    try:
+        #implementation of this would depend on how the vueJS side sends over the information on who is to be followed
+        # variable should be target user's ID
+        target_user_to_follow = request.form.get('target_user_id')
 
+        target = db.session.query(User).filter_by(id=target_user_to_follow).first()
+        if not target:
+            return jsonify({'error': 'Target user not found'}), 404
 
+        follows = Follows(
+            user_id=target_user_to_follow,
+            follower_id=user_id
+        )
+
+        db.session.add(follows)
+        db.session.commit()
+
+        data = {
+            "message": f"You are now following {target.username}"
+        }
+
+        return jsonify(data), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 ###
 # The functions below should be applicable to all Flask apps.
 ###
