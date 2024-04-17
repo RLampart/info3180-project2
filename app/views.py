@@ -199,7 +199,7 @@ def create_post(user_id):
         data = {
             "user_id":user_id,
             "photo": photo_name,
-            "description":caption
+            "caption":caption
         }
         return jsonify(data), 201
     else:
@@ -210,6 +210,26 @@ def create_post(user_id):
         }
         
         return jsonify(data),500
+    
+@app.route("/api/v1/users/<user_id>/posts",methods=["GET"])
+def get_posts(user_id):
+    posts = db.session.execute(db.Select(Posts).filter_by(user_id=user_id)).scalars()
+    posts =  [
+            {
+                "id": post.id,
+                "user_id": post.user_id,
+                "photo": post.photo,
+                "caption": post.caption,
+                "created_on": str(post.created_on)  
+            }
+            for post in posts
+        ]
+    
+    return jsonify(posts=posts), 200
+
+
+
+
 ###
 # The functions below should be applicable to all Flask apps.
 ###
