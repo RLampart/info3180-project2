@@ -6,7 +6,7 @@
      
   </div>
 
-  <div>
+  <div class = container>
       <form id='userForm' @submit.prevent="saveUser" method="post" enctype="multipart/form-data">
       <div class="form-group col-md-3">
       <label for="username" class="form-label">Username</label>
@@ -14,33 +14,33 @@
       </div>
       <div class="form-group col-md-3">
       <label for="password" class="form-label">Password</label>
-      <input type = "password" id="password" class="form-control"></input>
+      <input type = "password" id="password" class="form-control" />
       </div>  
       <div class="form-group col-md-3">
       <label for="fname" class="form-label">First Name</label>
-      <input type = "text" id="fname" class="form-control"></input>
+      <input type = "text" id="fname" class="form-control" />
       </div>  
       <div class="form-group col-md-3">
       <label for="lname" class="form-label">Last Name</label>
-      <input type = "text" id="lname" class="form-control"></input>
+      <input type = "text" id="lname" class="form-control"/>
       </div>  
       <div class="form-group col-md-3">
       <label for="email" class="form-label">Email</label>
-      <input type = "email" id="email" class="form-control"></input>
+      <input type = "email" id="email" class="form-control"/>
       </div>  
       <div class="form-group col-md-3">
       <label for="location" class="form-label">Location</label>
-      <input type = "text" id="location" class="form-control"></input>
+      <input type = "text" id="location" class="form-control"/>
       </div>  
       <div class="form-group col-md-3">
       <label for="bio" class="form-label">Biography</label>
-      <input type = "text" id="bio" class="form-control"></input>
+      <textarea id="bio" class="form-control"/>
       </div>  
      <div class="form-group col-md-3">
       <label for="photo" class="form-label">Profile Photo</label>
       <input type="file" id="photo" class="form-control" />
      </div>
-    <button type="submit" name="submit" class="btn btn-primary">Upload Movie</button>
+    <button type="submit" name="submit" class="btn btn-success">Register</button>
     </form>
   </div>
 </template>
@@ -74,7 +74,7 @@ function saveUser(){
    }).then(function (data) {
 // display a success message
     console.log(data);
-    movieForm.reset();
+    userForm.reset();
     if (data['message'] != undefined){
        category = "alert alert-success";
        messages = [data["message"]];
@@ -85,7 +85,7 @@ function saveUser(){
 
    }).catch(function (error) {
      console.log(error);
-     movieForm.reset();
+     userForm.reset();
      category = "alert alert-danger";
      messages = error;
      feedback.value = true;  
