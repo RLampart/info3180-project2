@@ -179,8 +179,37 @@ def logout():
     return jsonify({'message': 'User logged out successfully'}), 200
 
 
-
-
+@app.route("/api/v1/users/<user_id>/posts",methods=["POST"])
+def create_post(user_id):
+    form = NewPost()
+    if form.validate_on_submit():
+        caption = form.caption.data
+        photo = form.photo.data 
+        photo_name  =  secure_filename(photo.filename)
+        photo.save(os.path.join(
+            app.config['UPLOAD_FOLDER'], photo_name
+            ))
+        post = Posts(
+            caption=caption,
+            photo=photo_name,
+            user_id=user_id
+        )
+        db.session.add(post)
+        db.session.commit()
+        data = {
+            "user_id":user_id,
+            "photo": photo_name,
+            "description":caption
+        }
+        return jsonify(data), 201
+    else:
+        data = {
+            "errors":[
+                {error.split(" - ")[0]:error.split(" - ")[1]} for error in form_errors(form)
+                    ]
+        }
+        
+        return jsonify(data),500
 ###
 # The functions below should be applicable to all Flask apps.
 ###
