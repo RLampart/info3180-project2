@@ -5,7 +5,8 @@ Werkzeug Documentation:  https://werkzeug.palletsprojects.com/
 This file creates your application.
 """
 
-from flask import Flask, make_response, request, jsonify
+
+from flask import jsonify, request, g, send_from_directory, url_for
 from app import app, db, login_manager
 from flask import render_template, request, redirect, url_for, flash, send_from_directory
 from app.forms import *
@@ -17,10 +18,49 @@ from app import app, db
 import os
 from flask_wtf.csrf import generate_csrf
 from datetime import datetime
-
+import jwt
+from datetime import datetime, timedelta
+from functools import wraps
+from time import time
 ###
 # Routing for your application.
 ###
+blocked_tokens = set()
+
+def requires_auth(f):
+  @wraps(f)
+  def decorated(*args, **kwargs):
+    auth = request.headers.get('Authorization', None) # or request.cookies.get('token', None)
+
+    if auth in blocked_tokens:
+        return jsonify({'code': 'blocked_token', 'description': 'This token can no longer be used'}), 401
+
+    if not auth:
+      return jsonify({'code': 'authorization_header_missing', 'description': 'Authorization header is expected'}), 401
+
+    parts = auth.split()
+
+    if parts[0].lower() != 'bearer':
+      return jsonify({'code': 'invalid_header', 'description': 'Authorization header must start with Bearer'}), 401
+    elif len(parts) == 1:
+      return jsonify({'code': 'invalid_header', 'description': 'Token not found'}), 401
+    elif len(parts) > 2:
+      return jsonify({'code': 'invalid_header', 'description': 'Authorization header must be Bearer + \s + token'}), 401
+
+    token = parts[1]
+    try:
+        payload = jwt.decode(token, app.config['SECRET_KEY'], algorithms=["HS256"])
+
+    except jwt.ExpiredSignatureError:
+        return jsonify({'code': 'token_expired', 'description': 'token is expired'}), 401
+    except jwt.DecodeError:
+        return jsonify({'code': 'token_invalid_signature', 'description': 'Token signature is invalid'}), 401
+
+    g.current_user = user = payload
+    return f(*args, **kwargs)
+
+  return decorated
+
 
 @app.route('/')
 def index():
@@ -57,7 +97,7 @@ def register():
         )
         db.session.add(user)
         db.session.commit()
-        data = {
+        data =  {
             "message": "User successfully registered",
             "username": username,
             "password": hashed_pw,
@@ -69,14 +109,29 @@ def register():
             "profile_photo": photo_name,
             "joined_on": date_joined
         }
+    
+        return jsonify(data),201
     else:
         data = {
             "errors":[
                 {error.split(" - ")[0]:error.split(" - ")[1]} for error in form_errors(form)
                     ]
         }
-    return make_response(data,200)
+        
+        return jsonify(data),500
 
+
+def generate_token(user):
+    timestamp = datetime.utcnow()
+    payload = {
+        "sub": user,
+        "iat": timestamp,
+        "exp": timestamp + timedelta(minutes=3)
+    }
+
+    token = jwt.encode(payload, app.config['SECRET_KEY'], algorithm='HS256')
+
+    return token
 
 @app.route('/api/v1/auth/login', methods=['POST'])
 def login():
@@ -87,22 +142,25 @@ def login():
         password = form.password.data
         user = User.query.filter_by(username=username).first()
         if user:
-            print(user.password)
-            print(password)
-            print(check_password_hash(user.password,password))
             if check_password_hash(user.password,password):
-                login_user(user)
                 data = {
-                    "message": f"{user.username} successfully logged in."
-                }
+                        "message": f"{user.username} successfully logged in.",
+                        "token": generate_token(user.username)
+                        }
+                     
+                return jsonify(data), 202
+
             else:
                 data = {
-                    "message": f"{user.username}'s password is incorrect"
+                    "message": "Username or password is incorrect"
                 }
+                
+                return jsonify(data), 401
         else:
-            data = {
-                    "message": f"Profile with username:{username} cannot be found"
+            data ={
+                    "message": "Username or password is incorrect"
                 }
+            return jsonify(data), 401
 
     else:
         data = {
@@ -110,28 +168,17 @@ def login():
                 {error.split(" - ")[0]:error.split(" - ")[1]} for error in form_errors(form)
                     ]
         }
-    return make_response(data,200)
+        return jsonify(data), 500
 
 
-@app.route("/api/v1/auth/logout")
-@login_required
+@app.route("/api/v1/auth/logout", methods=['POST'])
+@requires_auth
 def logout():
-    data = {}
-    if current_user.is_active():
-        data = {
-            "message": f"{current_user.username} successfully logged out."
-            }
-        logout_user()
-    else:
-        data = {
-            "message": "No active users"
-            }
-    return make_response(data,200)
+    auth = request.headers.get('Authorization', None)
+    blocked_tokens.add(auth)
+    return jsonify({'message': 'User logged out successfully'}), 200
 
 
-@login_manager.user_loader
-def load_user(id):
-    return db.session.execute(db.select(User).filter_by(id=id)).scalar()
 
 
 ###
