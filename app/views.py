@@ -179,8 +179,81 @@ def logout():
     return jsonify({'message': 'User logged out successfully'}), 200
 
 
+@app.route("/api/v1/users/<user_id>/posts",methods=["POST"])
+def create_post(user_id):
+    form = NewPost()
+    if form.validate_on_submit():
+        caption = form.caption.data
+        photo = form.photo.data 
+        photo_name  =  secure_filename(photo.filename)
+        photo.save(os.path.join(
+            app.config['UPLOAD_FOLDER'], photo_name
+            ))
+        post = Posts(
+            caption=caption,
+            photo=photo_name,
+            user_id=user_id
+        )
+        db.session.add(post)
+        db.session.commit()
+        data = {
+            "user_id":user_id,
+            "photo": photo_name,
+            "caption":caption
+        }
+        return jsonify(data), 201
+    else:
+        data = {
+            "errors":[
+                {error.split(" - ")[0]:error.split(" - ")[1]} for error in form_errors(form)
+                    ]
+        }
+        
+        return jsonify(data),500
+    
+@app.route("/api/v1/users/<user_id>/posts",methods=["GET"])
+def get_posts(user_id):
+    posts = db.session.execute(db.Select(Posts).filter_by(user_id=user_id)).scalars()
+    posts =  [
+            {
+                "id": post.id,
+                "user_id": post.user_id,
+                "photo": post.photo,
+                "caption": post.caption,
+                "created_on": str(post.created_on)  
+            }
+            for post in posts
+        ]
+    
+    return jsonify(posts=posts), 200
 
 
+@app.route("/api/users/<user_id>/follow", methods=["POST"])
+def follow_user(user_id):
+    try:
+        #implementation of this would depend on how the vueJS side sends over the information on who is to be followed
+        # variable should be target user's ID
+        target_user_to_follow = request.form.get('target_user_id')
+
+        target = db.session.query(User).filter_by(id=target_user_to_follow).first()
+        if not target:
+            return jsonify({'error': 'Target user not found'}), 404
+
+        follows = Follows(
+            user_id=target_user_to_follow,
+            follower_id=user_id
+        )
+
+        db.session.add(follows)
+        db.session.commit()
+
+        data = {
+            "message": f"You are now following {target.username}"
+        }
+
+        return jsonify(data), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 ###
 # The functions below should be applicable to all Flask apps.
 ###
