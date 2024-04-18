@@ -286,7 +286,34 @@ def get_all_posts():
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+    
+@app.route("/api/v1/posts/<post_id>/like")
+def like_post(post_id):
+    try:
+        #implementation of this would depend on how the vueJS side sends over the information on who is to be followed
+        # variable should be target user's ID
+        logged_in_user_id = request.form.get('logged_in_user_id')
 
+        like = Likes(
+            user_id=logged_in_user_id,
+            post_id=post_id
+        )
+
+        db.session.add(like)
+        db.session.commit()
+        try:
+            likes_count = db.session.query(func.count(Likes.id)).filter_by(post_id=post_id).scalar()
+        except NoResultFound:
+            likes_count = 0
+
+        data = {
+            "message": "Post liked!",
+            "likes": likes_count
+        }
+
+        return jsonify(data), 201
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
     
 
