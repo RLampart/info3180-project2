@@ -212,7 +212,8 @@ def create_post(user_id):
         
         return jsonify(data),500
     
-@app.route("/api/v1/users/<user_id>/posts",methods=["GET"])
+@app.route("/api/v1/users/<int:user_id>/posts",methods=["GET"])
+@requires_auth
 def get_posts(user_id):
     posts = db.session.execute(db.Select(Posts).filter_by(user_id=user_id)).scalars()
     posts =  [
@@ -229,7 +230,8 @@ def get_posts(user_id):
     return jsonify(posts=posts), 200
 
 
-@app.route("/api/users/<user_id>/follow", methods=["POST"])
+@app.route("/api/users/<int:user_id>/follow", methods=["POST"])
+@requires_auth
 def follow_user(user_id):
     try:
         #implementation of this would depend on how the vueJS side sends over the information on who is to be followed
@@ -252,11 +254,12 @@ def follow_user(user_id):
             "message": f"You are now following {target.username}"
         }
 
-        return jsonify(data), 200
+        return jsonify(data), 201
     except Exception as e:
         return jsonify({'error': str(e)}), 500
     
 @app.route("/api/v1/posts")
+@requires_auth
 def get_all_posts():
     posts = []
     try:
@@ -277,12 +280,13 @@ def get_all_posts():
                 "likes": likes_count
             }
             posts.append(post_dict)
-        return jsonify(posts=posts),200
+        return jsonify(posts=posts),201
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
     
 @app.route("/api/v1/posts/<post_id>/like")
+@requires_auth
 def like_post(post_id):
     try:
         #implementation of this would depend on how the vueJS side sends over the information on who is to be followed
