@@ -141,40 +141,34 @@ def get_csrf():
 
 @app.route('/api/v1/auth/login', methods=['POST'])
 def login():
-    form = Login()
-    data = {}
-    if form.validate_on_submit():
-        username = form.username.data
-        password = form.password.data
-        user = User.query.filter_by(username=username).first()
-        if user:
-            if check_password_hash(user.password,password):
-                data = {
-                        "message": f"{user.username} successfully logged in.",
-                        "token": generate_token(user.username)
-                        }
-                     
-                return jsonify(data), 202
+    if not request.is_json:
+        return jsonify({"error": "Invalid request, JSON data expected"}), 400
+    data = request.json
+    username = data.get('username')
+    password = data.get('password')
+    user = User.query.filter_by(username=username).first()
+    if user:
+        if check_password_hash(user.password,password):
+            data = {
+                    "message": f"{user.username} successfully logged in.",
+                    "token": generate_token(user.username)
+                    }
+                    
+            return jsonify(data), 200
 
-            else:
-                data = {
-                    "message": "Username or password is incorrect"
-                }
-                
-                return jsonify(data), 401
         else:
-            data ={
-                    "message": "Username or password is incorrect"
-                }
+            data = {
+                "message": "Username or password is incorrect"
+            }
+            
             return jsonify(data), 401
-
     else:
-        data = {
-            "errors":[
-                {error.split(" - ")[0]:error.split(" - ")[1]} for error in form_errors(form)
-                    ]
-        }
-        return jsonify(data), 500
+        data ={
+                "message": "Username or password is incorrect"
+            }
+        return jsonify(data), 401
+
+    
 
 
 @app.route("/api/v1/auth/logout", methods=['POST'])
