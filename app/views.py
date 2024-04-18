@@ -179,7 +179,8 @@ def logout():
     return jsonify({'message': 'User logged out successfully'}), 200
 
 
-@app.route("/api/v1/users/<user_id>/posts",methods=["POST"])
+@app.route("/api/v1/users/<int:user_id>/posts",methods=["POST"])
+@requires_auth
 def create_post(user_id):
     form = NewPost()
     if form.validate_on_submit():
