@@ -22,6 +22,8 @@ import jwt
 from datetime import datetime, timedelta
 from functools import wraps
 from time import time
+from sqlalchemy import func
+from sqlalchemy.orm.exc import NoResultFound
 ###
 # Routing for your application.
 ###
@@ -254,6 +256,36 @@ def follow_user(user_id):
         return jsonify(data), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+    
+@app.route("/api/v1/posts")
+def get_all_posts():
+    posts = []
+    try:
+        all_posts = db.session.query(Posts).all()
+
+        for post in all_posts:
+            try:
+                likes_count = db.session.query(func.count(Likes.id)).filter_by(post_id=post.id).scalar()
+            except NoResultFound:
+                likes_count = 0
+
+            post_dict = {
+                "id": post.id,
+                "user_id": post.user_id,
+                "photo": post.photo,
+                "caption": post.caption,
+                "created_on": post.created_on,
+                "likes": likes_count
+            }
+            posts.append(post_dict)
+        return jsonify(posts=posts),200
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+    
+
 ###
 # The functions below should be applicable to all Flask apps.
 ###
