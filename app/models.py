@@ -29,9 +29,8 @@ class Likes(db.Model) :
     post_id = db.Column(db.Integer,nullable = False)
     user_id  = user_id = db.Column(db.Integer,nullable = False)
     
-    def __init__(self,caption,photo,user_id):
-        self.caption = caption
-        self.photo = photo
+    def __init__(self,post_id,user_id):
+        self.post_id = post_id
         self.user_id = user_id
         
     def __repr__(self):

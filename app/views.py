@@ -22,6 +22,8 @@ import jwt
 from datetime import datetime, timedelta
 from functools import wraps
 from time import time
+from sqlalchemy import func
+from sqlalchemy.orm.exc import NoResultFound
 ###
 # Routing for your application.
 ###
@@ -133,42 +135,40 @@ def generate_token(user):
 
     return token
 
+@app.route('/api/v1/csrf-token', methods=['GET'])
+def get_csrf():
+ return jsonify({'csrf_token': generate_csrf()})
+
 @app.route('/api/v1/auth/login', methods=['POST'])
 def login():
-    form = Login()
-    data = {}
-    if form.validate_on_submit():
-        username = form.username.data
-        password = form.password.data
-        user = User.query.filter_by(username=username).first()
-        if user:
-            if check_password_hash(user.password,password):
-                data = {
-                        "message": f"{user.username} successfully logged in.",
-                        "token": generate_token(user.username)
-                        }
-                     
-                return jsonify(data), 202
+    if not request.is_json:
+        return jsonify({"error": "Invalid request, JSON data expected"}), 400
+    data = request.json
+    username = data.get('username')
+    password = data.get('password')
+    user = User.query.filter_by(username=username).first()
+    if user:
+        if check_password_hash(user.password,password):
+            data = {
+                    "message": f"{user.username} successfully logged in.",
+                    "token": generate_token(user.username)
+                    }
+                    
+            return jsonify(data), 200
 
-            else:
-                data = {
-                    "message": "Username or password is incorrect"
-                }
-                
-                return jsonify(data), 401
         else:
-            data ={
-                    "message": "Username or password is incorrect"
-                }
+            data = {
+                "message": "Username or password is incorrect"
+            }
+            
             return jsonify(data), 401
-
     else:
-        data = {
-            "errors":[
-                {error.split(" - ")[0]:error.split(" - ")[1]} for error in form_errors(form)
-                    ]
-        }
-        return jsonify(data), 500
+        data ={
+                "message": "Username or password is incorrect"
+            }
+        return jsonify(data), 401
+
+    
 
 
 @app.route("/api/v1/auth/logout", methods=['POST'])
@@ -179,7 +179,8 @@ def logout():
     return jsonify({'message': 'User logged out successfully'}), 200
 
 
-@app.route("/api/v1/users/<user_id>/posts",methods=["POST"])
+@app.route("/api/v1/users/<int:user_id>/posts",methods=["POST"])
+@requires_auth
 def create_post(user_id):
     form = NewPost()
     if form.validate_on_submit():
@@ -211,7 +212,8 @@ def create_post(user_id):
         
         return jsonify(data),500
     
-@app.route("/api/v1/users/<user_id>/posts",methods=["GET"])
+@app.route("/api/v1/users/<int:user_id>/posts",methods=["GET"])
+@requires_auth
 def get_posts(user_id):
     posts = db.session.execute(db.Select(Posts).filter_by(user_id=user_id)).scalars()
     posts =  [
@@ -228,7 +230,8 @@ def get_posts(user_id):
     return jsonify(posts=posts), 200
 
 
-@app.route("/api/users/<user_id>/follow", methods=["POST"])
+@app.route("/api/users/<int:user_id>/follow", methods=["POST"])
+@requires_auth
 def follow_user(user_id):
     try:
         #implementation of this would depend on how the vueJS side sends over the information on who is to be followed
@@ -251,9 +254,68 @@ def follow_user(user_id):
             "message": f"You are now following {target.username}"
         }
 
-        return jsonify(data), 200
+        return jsonify(data), 201
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+    
+@app.route("/api/v1/posts")
+@requires_auth
+def get_all_posts():
+    posts = []
+    try:
+        all_posts = db.session.query(Posts).all()
+
+        for post in all_posts:
+            try:
+                likes_count = db.session.query(func.count(Likes.id)).filter_by(post_id=post.id).scalar()
+            except NoResultFound:
+                likes_count = 0
+
+            post_dict = {
+                "id": post.id,
+                "user_id": post.user_id,
+                "photo": post.photo,
+                "caption": post.caption,
+                "created_on": post.created_on,
+                "likes": likes_count
+            }
+            posts.append(post_dict)
+        return jsonify(posts=posts),201
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    
+@app.route("/api/v1/posts/<post_id>/like")
+@requires_auth
+def like_post(post_id):
+    try:
+        #implementation of this would depend on how the vueJS side sends over the information on who is to be followed
+        # variable should be target user's ID
+        logged_in_user_id = request.form.get('logged_in_user_id')
+
+        like = Likes(
+            user_id=logged_in_user_id,
+            post_id=post_id
+        )
+
+        db.session.add(like)
+        db.session.commit()
+        try:
+            likes_count = db.session.query(func.count(Likes.id)).filter_by(post_id=post_id).scalar()
+        except NoResultFound:
+            likes_count = 0
+
+        data = {
+            "message": "Post liked!",
+            "likes": likes_count
+        }
+
+        return jsonify(data), 201
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+    
+
 ###
 # The functions below should be applicable to all Flask apps.
 ###
