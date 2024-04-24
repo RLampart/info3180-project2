@@ -1,4 +1,5 @@
 <script setup>
+import { ref, onMounted } from "vue";
 import { useRouter } from 'vue-router';
 
 const props = defineProps(['post']);
@@ -9,6 +10,32 @@ const goToUserProfile = (userId) => {
     // Move to user profile
     router.push(`/users/${userId}`)
 };
+
+// Function to like a post
+// const likePost = () => {
+//     if (!post.value.liked) {
+//         const token = localStorage.getItem('token');
+
+//         // Call API to update likes in the database
+//         fetch(`/api/posts/${post.value.id}/like`, {
+//             method: 'POST',
+//             headers: {
+//                 'X-CSRFToken': csrf_token.value,
+//                 'Authorization': `Bearer ${token}`,
+//                 'Content-Type': 'application/json'
+//             }
+//         })
+//         .then(response => response.json())
+//         .then(data => {
+//             // Update the post object with new like count and status
+//             post.value.likes = data.likes;
+//             post.value.liked = true;
+//         })
+//         .catch(error => {
+//             console.error('Error liking post:', error);
+//         });
+//     }
+// };
 
 // Function to format the date
 const formatDate = (dateString) => {
@@ -23,7 +50,7 @@ const formatDate = (dateString) => {
     <div class="card col col-md-4">
         <div class="card-header">
             <img :src="'../../uploads/' + post.user.profile_photo" alt="Profile Picture" class="profile-pic"> 
-            <a href="#" @click="goToUserProfile(post.user.user_id)"><strong>{{ post.user.username }}</strong></a>
+            <a @click="goToUserProfile(post.user.user_id)"><strong>{{ post.user.username }}</strong></a>
         </div>
         <div class="post-media">
             <img :src="'../../uploads/' + post.photo" alt="Post Picture" class="post-pic">
@@ -63,6 +90,7 @@ const formatDate = (dateString) => {
 .card-header a {
     text-decoration: none; 
     color: inherit; 
+    cursor: pointer;
 }
 
 .profile-pic {

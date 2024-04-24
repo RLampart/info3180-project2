@@ -6,9 +6,9 @@
      
   </div>
 
-  <div class = 'registerform container'>
-    <h3>Register</h3>
-      <form id='userForm' @submit.prevent="saveUser" method="post" enctype="multipart/form-data">
+  <div class = 'container'>
+    <h4>Register</h4>
+      <form class="registerform shadow" id='userForm' @submit.prevent="saveUser" method="post" enctype="multipart/form-data">
       <div class="form-group col-md-12">
       <label for="username" class="form-label">Username</label>
       <input type="text" name="username" id="username" class="form-control" />
@@ -95,15 +95,23 @@ function saveUser(){
   
 </script>
 
-<style>
+<style scoped>
+.container {
+  width: 30%;
+}
+
+h4 {
+  padding-bottom: 10px;
+}
+
 /* Add any component specific styles here */
 .registerform{
   flex-direction: column;
   height: auto;
-
+  background-color: white;
+  padding: 30px;
 }
 form{
-  background-color: white;
   margin-bottom: 20px;
 }
 .form-group{
@@ -120,7 +128,9 @@ form{
 button.btn{
   margin: 0 auto;
   margin-top: 5%;
- display: block;
+  display: block;
+  width:100%;
+  border: none;
+  background-color: #70bb1f;
 }
-
 </style>

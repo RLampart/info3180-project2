@@ -6,7 +6,6 @@ import Post from "@/components/Post.vue";
 let csrf_token = ref("");
 const router = useRouter();
 const posts = ref([]);
-const post = ref({ liked: false });
 
 var feedback = ref(false);
 let messages = ref([]);
@@ -72,32 +71,6 @@ const fetchPosts = async () => {
         })
     } catch (error) {
         console.log(error)
-    }
-};
-
-// Function to like a post
-const likePost = () => {
-    if (!post.value.liked) {
-        const token = localStorage.getItem('token');
-
-        // Call API to update likes in the database
-        fetch(`/api/posts/${post.value.id}/like`, {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': csrf_token.value,
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            // Update the post object with new like count and status
-            post.value.likes = data.likes;
-            post.value.liked = true;
-        })
-        .catch(error => {
-            console.error('Error liking post:', error);
-        });
     }
 };
 
