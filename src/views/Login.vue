@@ -1,10 +1,12 @@
 <script setup>
 import { ref, onMounted  } from "vue";
-import { useRoute, useRouter } from 'vue-router';
+import { useRouter } from 'vue-router';
+import { updateUserId, loggedIn } from './user';
+
 let csrf_token = ref("");
 var feedback = ref(false);
 const router = useRouter()
-let messages = "";
+let messages = ref([]);
 let category = ref("alert alert-danger");
 function getCsrfToken() {
 fetch('/api/v1/csrf-token').then((response) => response.json())
@@ -40,7 +42,13 @@ var json = JSON.stringify(object);
        category = "alert alert-success";
        messages = [data["message"]];
        localStorage.setItem("token",data['token']);
-       router.push('/explore');
+       loggedIn.value = true;
+       updateUserId(data.id);
+
+      // Delay Switching Route to Display message
+      setTimeout(() => {
+        router.push('/explore');
+      }, 500);
        //redirect
     }else{
       category = "alert alert-danger";
@@ -66,14 +74,14 @@ var json = JSON.stringify(object);
     </ol>   
    </div>
 
-  <div class = container>
-    <h3>Login</h3>
-      <form id='loginForm' @submit.prevent="login" method="post">
-      <div class="form-group col-md-10">
+  <div class = 'login-container container'>
+    <h4>Login</h4>
+      <form class='shadow' id='loginForm' @submit.prevent="login" method="post">
+      <div class="form-group col-md-12">
       <label for="username" class="form-label">Username</label>
       <input type="text" name="username" id="username" class="form-control" />
       </div>
-      <div class="form-group col-md-10">
+      <div class="form-group col-md-12">
       <label for="password" class="form-label">Password</label>
       <input type = "password" name="password" id="password" class="form-control" />
       </div>  
@@ -83,24 +91,32 @@ var json = JSON.stringify(object);
   </div>
 </template>
 
-<style>
-.container{
+<style scoped>
+.login-container{
   flex-direction: column;
   height: auto;
-
+  width: 30%;
 }
+
+h4 {
+  padding-bottom: 10px;
+}
+
 form{
   background-color: white;
   padding: 30px;
-  width: 50%;
+  
 }
 .form-group{
   padding: 10px;
-  padding-left: 30px;
 }
 .form-control{
   align-self: center;
   justify-self: center;
+}
+
+.login-container > #password{
+  margin-bottom: 10%;
 }
 .form-label{
   font-weight: bold;
@@ -108,7 +124,10 @@ form{
 
 button.btn{
   margin: 0 auto;
- display: block;
+  margin-top: 15%;
+  display: block;
+  width:100%;
+  border: none;
+  background-color: #70bb1f;
 }
-
 </style>

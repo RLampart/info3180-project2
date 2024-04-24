@@ -24,45 +24,58 @@ from functools import wraps
 from time import time
 from sqlalchemy import func
 from sqlalchemy.orm.exc import NoResultFound
-###
-# Routing for your application.
-###
+
+
 blocked_tokens = set()
 
 def requires_auth(f):
-  @wraps(f)
-  def decorated(*args, **kwargs):
-    auth = request.headers.get('Authorization', None) # or request.cookies.get('token', None)
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        auth = request.headers.get('Authorization', None) # or request.cookies.get('token', None)
 
-    if auth in blocked_tokens:
-        return jsonify({'code': 'blocked_token', 'description': 'This token can no longer be used'}), 401
+        if auth in blocked_tokens:
+            return jsonify({'code': 'blocked_token', 'description': 'This token can no longer be used'}), 401
 
-    if not auth:
-      return jsonify({'code': 'authorization_header_missing', 'description': 'Authorization header is expected'}), 401
+        if not auth:
+            return jsonify({'code': 'authorization_header_missing', 'description': 'Authorization header is expected'}), 401
 
-    parts = auth.split()
+        parts = auth.split()
 
-    if parts[0].lower() != 'bearer':
-      return jsonify({'code': 'invalid_header', 'description': 'Authorization header must start with Bearer'}), 401
-    elif len(parts) == 1:
-      return jsonify({'code': 'invalid_header', 'description': 'Token not found'}), 401
-    elif len(parts) > 2:
-      return jsonify({'code': 'invalid_header', 'description': 'Authorization header must be Bearer + \s + token'}), 401
+        if parts[0].lower() != 'bearer':
+            return jsonify({'code': 'invalid_header', 'description': 'Authorization header must start with Bearer'}), 401
+        elif len(parts) == 1:
+            return jsonify({'code': 'invalid_header', 'description': 'Token not found'}), 401
+        elif len(parts) > 2:
+            return jsonify({'code': 'invalid_header', 'description': 'Authorization header must be Bearer + \s + token'}), 401
 
-    token = parts[1]
-    try:
-        payload = jwt.decode(token, app.config['SECRET_KEY'], algorithms=["HS256"])
+        token = parts[1]
+        try:
+            payload = jwt.decode(token, app.config['SECRET_KEY'], algorithms=["HS256"])
 
-    except jwt.ExpiredSignatureError:
-        return jsonify({'code': 'token_expired', 'description': 'token is expired'}), 401
-    except jwt.DecodeError:
-        return jsonify({'code': 'token_invalid_signature', 'description': 'Token signature is invalid'}), 401
+        except jwt.ExpiredSignatureError:
+            return jsonify({'code': 'token_expired', 'description': 'token is expired'}), 401
+        except jwt.DecodeError:
+            return jsonify({'code': 'token_invalid_signature', 'description': 'Token signature is invalid'}), 401
 
-    g.current_user = user = payload
-    return f(*args, **kwargs)
+        g.current_user = user = payload
+        return f(*args, **kwargs)
+    return decorated
 
-  return decorated
+def generate_token(user):
+    timestamp = datetime.utcnow()
+    payload = {
+        "sub": user,
+        "iat": timestamp,
+        "exp": timestamp + timedelta(minutes=10)
+    }
 
+    token = jwt.encode(payload, app.config['SECRET_KEY'], algorithm='HS256')
+
+    return token
+
+###
+# Routing for your application.
+###
 
 @app.route('/')
 def index():
@@ -122,19 +135,6 @@ def register():
         
         return jsonify(data),500
 
-
-def generate_token(user):
-    timestamp = datetime.utcnow()
-    payload = {
-        "sub": user,
-        "iat": timestamp,
-        "exp": timestamp + timedelta(minutes=3)
-    }
-
-    token = jwt.encode(payload, app.config['SECRET_KEY'], algorithm='HS256')
-
-    return token
-
 @app.route('/api/v1/csrf-token', methods=['GET'])
 def get_csrf():
  return jsonify({'csrf_token': generate_csrf()})
@@ -151,7 +151,8 @@ def login():
         if check_password_hash(user.password,password):
             data = {
                     "message": f"{user.username} successfully logged in.",
-                    "token": generate_token(user.username)
+                    "token": generate_token(user.username),
+                    "id": user.id
                     }
                     
             return jsonify(data), 200
@@ -163,13 +164,11 @@ def login():
             
             return jsonify(data), 401
     else:
+        login_user();
         data ={
                 "message": "Username or password is incorrect"
             }
         return jsonify(data), 401
-
-    
-
 
 @app.route("/api/v1/auth/logout", methods=['POST'])
 @requires_auth
@@ -177,7 +176,6 @@ def logout():
     auth = request.headers.get('Authorization', None)
     blocked_tokens.add(auth)
     return jsonify({'message': 'User logged out successfully'}), 200
-
 
 @app.route("/api/v1/users/<int:user_id>/posts",methods=["POST"])
 @requires_auth
@@ -200,7 +198,8 @@ def create_post(user_id):
         data = {
             "user_id":user_id,
             "photo": photo_name,
-            "caption":caption
+            "caption":caption,
+            "message": "Post successfully created!"
         }
         return jsonify(data), 201
     else:
@@ -229,22 +228,27 @@ def get_posts(user_id):
     
     return jsonify(posts=posts), 200
 
-
 @app.route("/api/users/<int:user_id>/follow", methods=["POST"])
 @requires_auth
 def follow_user(user_id):
     try:
         #implementation of this would depend on how the vueJS side sends over the information on who is to be followed
         # variable should be target user's ID
-        target_user_to_follow = request.form.get('target_user_id')
+        current_user_id = request.json.get('current_user_id')['_rawValue']
+        
+        if current_user_id == user_id:
+            return jsonify({'error': 'You cannot follow your own account'}), 400
 
-        target = db.session.query(User).filter_by(id=target_user_to_follow).first()
+
+        # target_user_to_follow = request.form.get('target_user_id')
+
+        target = db.session.query(User).filter_by(id=user_id).first()
         if not target:
             return jsonify({'error': 'Target user not found'}), 404
 
         follows = Follows(
-            user_id=target_user_to_follow,
-            follower_id=user_id
+            user_id= user_id,
+            follower_id=current_user_id
         )
 
         db.session.add(follows)
@@ -285,14 +289,14 @@ def get_all_posts():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
     
-@app.route("/api/v1/posts/<post_id>/like")
+@app.route("/api/v1/posts/<post_id>/like", methods=["POST"])
 @requires_auth
 def like_post(post_id):
     try:
         #implementation of this would depend on how the vueJS side sends over the information on who is to be followed
         # variable should be target user's ID
-        logged_in_user_id = request.form.get('logged_in_user_id')
-
+        logged_in_user_id =  request.json.get('current_user_id')['_rawValue']
+        print(logged_in_user_id)
         like = Likes(
             user_id=logged_in_user_id,
             post_id=post_id
@@ -314,8 +318,81 @@ def like_post(post_id):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-    
+# ---------------- Additional Endpoints ------------------
 
+# Endppoint to retrieve a specified user
+@app.route('/api/v1/users/<int:user_id>', methods=['GET'])
+@requires_auth
+def get_user_profile(user_id):
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+
+    profile_data = {
+        'username': user.username,
+        'firstname': user.firstname,
+        'lastname': user.lastname,
+        'email': user.email,
+        'location': user.location,
+        'biography': user.biography,
+        'profile_photo': user.profile_photo,
+        'joined_on': user.joined_on
+    }
+    return jsonify(profile_data), 200
+
+# Endpoint to retrieve followers for a specific user
+@app.route("/api/v1/users/<int:user_id>/follow", methods=["GET"])
+@requires_auth
+def get_followers(user_id):
+    try:
+        # Query the database to get the count of followers for the user
+        follower_count = db.session.query(Follows).filter_by(user_id=user_id).count()
+
+        data = {
+            "user_id": user_id,
+            "follower_count": follower_count
+        }
+
+        return jsonify(data), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# Endpoint to check if a user is already following another user
+@app.route("/api/v1/users/<int:user_id>/is_following", methods=["POST"])
+@requires_auth
+def is_following(user_id):
+    try:
+        current_user_id = request.json.get('current_user_id')['_rawValue']
+
+        follows = Follows.query.filter_by(follower_id=current_user_id, user_id=user_id).first()
+        is_following = follows is not None
+
+        data = {
+            "is_following": is_following
+        }
+
+        return jsonify(data), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# Endpoint to check if a user is already liking another users' post
+@app.route("/api/v1/posts/<int:post_id>/is_liking", methods=["POST"])
+@requires_auth
+def is_liking(post_id):
+    try:
+        current_user_id = request.json.get('current_user_id')['_rawValue']
+        
+        likes = Likes.query.filter_by(user_id=current_user_id, post_id=post_id).first()
+        is_liking = likes is not None
+
+        data = {
+            "is_liking": is_liking
+        }
+
+        return jsonify(data), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    
 ###
 # The functions below should be applicable to all Flask apps.
 ###
@@ -341,7 +418,6 @@ def send_text_file(file_name):
     file_dot_text = file_name + '.txt'
     return app.send_static_file(file_dot_text)
 
-
 @app.after_request
 def add_header(response):
     """
@@ -352,7 +428,6 @@ def add_header(response):
     response.headers['X-UA-Compatible'] = 'IE=Edge,chrome=1'
     response.headers['Cache-Control'] = 'public, max-age=0'
     return response
-
 
 @app.errorhandler(404)
 def page_not_found(error):

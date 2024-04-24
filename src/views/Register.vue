@@ -6,38 +6,38 @@
      
   </div>
 
-  <div class = container>
-    <h3>Register</h3>
-      <form id='userForm' @submit.prevent="saveUser" method="post" enctype="multipart/form-data">
-      <div class="form-group col-md-10">
+  <div class = 'container'>
+    <h4>Register</h4>
+      <form class="registerform shadow" id='userForm' @submit.prevent="saveUser" method="post" enctype="multipart/form-data">
+      <div class="form-group col-md-12">
       <label for="username" class="form-label">Username</label>
       <input type="text" name="username" id="username" class="form-control" />
       </div>
-      <div class="form-group col-md-10">
+      <div class="form-group col-md-12">
       <label for="password" class="form-label">Password</label>
       <input type = "password" name="password" id="password" class="form-control" />
       </div>  
-      <div class="form-group col-md-10">
+      <div class="form-group col-md-12">
       <label for="first_name" class="form-label">First Name</label>
       <input type = "text" name="first_name" id="first_name" class="form-control" />
       </div>  
-      <div class="form-group col-md-10">
+      <div class="form-group col-md-12">
       <label for="last_name" class="form-label">Last Name</label>
       <input type = "text" name="last_name" id="last_name" class="form-control"/>
       </div>  
-      <div class="form-group col-md-10">
+      <div class="form-group col-md-12">
       <label for="email" class="form-label">Email</label>
       <input type = "email" name="email" id="email" class="form-control"/>
       </div>  
-      <div class="form-group col-md-10">
+      <div class="form-group col-md-12">
       <label for="location" class="form-label">Location</label>
       <input type = "text" name="location" id="location" class="form-control"/>
       </div>  
-      <div class="form-group col-md-10">
+      <div class="form-group col-md-12">
       <label for="bio" class="form-label">Biography</label>
       <textarea name="bio" id="bio" class="form-control"></textarea>
       </div>  
-     <div class="form-group col-md-10">
+     <div class="form-group col-md-12">
       <label for="photo" class="form-label">Profile Photo</label>
       <input type="file" name="photo" id="photo" class="form-control" />
      </div>
@@ -95,20 +95,27 @@ function saveUser(){
   
 </script>
 
-<style>
+<style scoped>
+.container {
+  width: 30%;
+}
+
+h4 {
+  padding-bottom: 10px;
+}
+
 /* Add any component specific styles here */
-.container{
+.registerform{
   flex-direction: column;
   height: auto;
-
+  background-color: white;
+  padding: 30px;
 }
 form{
-  background-color: white;
   margin-bottom: 20px;
 }
 .form-group{
   padding: 10px;
-  padding-left: 30px;
 }
 .form-control{
   align-self: center;
@@ -120,7 +127,10 @@ form{
 
 button.btn{
   margin: 0 auto;
- display: block;
+  margin-top: 5%;
+  display: block;
+  width:100%;
+  border: none;
+  background-color: #70bb1f;
 }
-
 </style>
