@@ -14,13 +14,12 @@ let category = ref("alert alert-danger");
 const getCsrfToken = () => {
     fetch('/api/v1/csrf-token')
     .then(data => {
-        console.log(data);
         csrf_token.value = data.csrf_token;
     });
 };
 
 const makePost = async () => {
-    router.push(`/api/v1/users/${userId}/posts`)
+    router.push('/posts/new');
 }
 
 const fetchPosts = async () => {
@@ -35,42 +34,12 @@ const fetchPosts = async () => {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json' 
             }
-        })
-        .then(response => response.json())
-        .then((data) => {
-            // posts.value = data.data;
-
-            // Test post results
-            posts.value = [
-                {
-                    id: 1,
-                    user: {
-                        user_id: 1,
-                        profile_photo: 'test.jpg',
-                        username: 'qxeenolight'
-                    },
-                    photo: 'test.jpg',
-                    caption: 'This is a post caption',
-                    likes: 10,
-                    created_on: '2024-04-19'
-                },
-                {
-                    id: 2,
-                    user: {
-                        user_id: 2,
-                        profile_photo: 'cat.jpg',
-                        username: 'kxngodarkness'
-                    },
-                    photo: 'himiko_toga.jpg',
-                    caption: 'This is a post caption',
-                    likes: 10,
-                    created_on: '2024-04-19'
-                },
-            ];
-            console.log("Post Fetched")
-        })
+        });
+        const data = await response.json();
+        posts.value = data.posts;
+        console.log("Post Fetched")
     } catch (error) {
-        console.log(error)
+        console.error("Error fetching posts:", error);
     }
 };
 
@@ -99,7 +68,7 @@ function applyFlexStyles() {
 
     <div class="container">
         <div class="explore">
-            <Post :post="post" v-for="post in posts" :key="post.id" />
+            <Post :post="post" v-for="post in posts" :key="post.post_id" />
         </div>
 
         <!-- Add New Post -->
@@ -123,7 +92,7 @@ function applyFlexStyles() {
 
 .new-post-btn {
     position: absolute;
-    top: 140px;
+    top: 115px;
     right: 80px;
     background-color: #007bff;
     color: #fff;

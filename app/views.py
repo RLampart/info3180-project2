@@ -198,7 +198,8 @@ def create_post(user_id):
         data = {
             "user_id":user_id,
             "photo": photo_name,
-            "caption":caption
+            "caption":caption,
+            "message": "Post successfully created!"
         }
         return jsonify(data), 201
     else:
@@ -288,14 +289,14 @@ def get_all_posts():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
     
-@app.route("/api/v1/posts/<post_id>/like")
+@app.route("/api/v1/posts/<post_id>/like", methods=["POST"])
 @requires_auth
 def like_post(post_id):
     try:
         #implementation of this would depend on how the vueJS side sends over the information on who is to be followed
         # variable should be target user's ID
-        logged_in_user_id = request.form.get('logged_in_user_id')
-
+        logged_in_user_id =  request.json.get('current_user_id')['_rawValue']
+        print(logged_in_user_id)
         like = Likes(
             user_id=logged_in_user_id,
             post_id=post_id
@@ -340,7 +341,7 @@ def get_user_profile(user_id):
     return jsonify(profile_data), 200
 
 # Endpoint to retrieve followers for a specific user
-@app.route("/api/users/<int:user_id>/follow", methods=["GET"])
+@app.route("/api/v1/users/<int:user_id>/follow", methods=["GET"])
 @requires_auth
 def get_followers(user_id):
     try:
@@ -357,7 +358,7 @@ def get_followers(user_id):
         return jsonify({'error': str(e)}), 500
 
 # Endpoint to check if a user is already following another user
-@app.route("/api/users/<int:user_id>/is_following", methods=["POST"])
+@app.route("/api/v1/users/<int:user_id>/is_following", methods=["POST"])
 @requires_auth
 def is_following(user_id):
     try:
@@ -374,6 +375,24 @@ def is_following(user_id):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+# Endpoint to check if a user is already liking another users' post
+@app.route("/api/v1/posts/<int:post_id>/is_liking", methods=["POST"])
+@requires_auth
+def is_liking(post_id):
+    try:
+        current_user_id = request.json.get('current_user_id')['_rawValue']
+        
+        likes = Likes.query.filter_by(user_id=current_user_id, post_id=post_id).first()
+        is_liking = likes is not None
+
+        data = {
+            "is_liking": is_liking
+        }
+
+        return jsonify(data), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    
 ###
 # The functions below should be applicable to all Flask apps.
 ###

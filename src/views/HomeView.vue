@@ -31,8 +31,6 @@ function applyFlexStyles() {
     container.style.flexDirection = 'row';
   }
 }
-
-
 </script>
 
 <template>
@@ -59,7 +57,7 @@ function applyFlexStyles() {
   justify-content: center;
   align-items: left;
   height: 80vh;
-  padding-top: 50px;
+  padding-top: 70px;
 }
 
 .image-container,

@@ -82,14 +82,13 @@ const logout = () => {
   })
   .then(response => response.json())
   .then(data => {
-    console.log(data);
     localStorage.clear();
-    console.log('Token removed from localstorage');
+    console.log('Token Removed From Localstorage');
     loggedIn.value = false;
 
     category = "alert alert-success";
     messages = [data["message"]];
-    console.log(messages);
+
     setTimeout(() => {
       feedback.value = false;
       router.push('/');

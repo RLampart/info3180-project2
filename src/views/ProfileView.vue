@@ -12,13 +12,13 @@ const posts = ref([]);
 const followersCount = ref(0); // Initialize with 0
 const isFollowed = ref(false);
 const followText = ref('Follow');
+const postCount = ref(0);
 
 const isOwnProfile = ref(false);
 
 const getCsrfToken = () => {
     fetch('/api/v1/csrf-token')
     .then(data => {
-        console.log(data);
         csrf_token.value = data.csrf_token;
     });
 };
@@ -27,7 +27,7 @@ const getCsrfToken = () => {
 const fetchFollowers = async () => {
     try {
         const token = localStorage.getItem('token');
-        const response = await fetch(`/api/users/${router.currentRoute.value.params.id}/follow`, {
+        const response = await fetch(`/api/v1/users/${router.currentRoute.value.params.id}/follow`, {
         method: 'GET',
         headers: { 
             'Authorization': `Bearer ${token}`,
@@ -73,7 +73,7 @@ const follow = () => {
 const checkIfFollowing = async () => {
     try {
         const token = localStorage.getItem('token');
-        const response = await fetch(`/api/users/${router.currentRoute.value.params.id}/is_following`, {
+        const response = await fetch(`/api/v1/users/${router.currentRoute.value.params.id}/is_following`, {
             method: 'POST',
             headers: {
                 'X-CSRFToken': csrf_token.value,
@@ -100,80 +100,31 @@ const checkOwnership = () => {
     isOwnProfile.value = userId.value == router.currentRoute.value.params.id;
 };
 
-// userId
 const fetchPosts = async () => {
     // Fetch posts from the database
-    // console.log("Fetching posts..");
-    // try {
-    //     const response = await fetch(`/api/v1/users/${userId}/posts`);
+    console.log("Fetching posts..");
 
-    //     if (!response.ok) {
-    //         console.log("Response not ok...")
-    //         throw new Error(`HTTP error! Status: ${response.status}`);
-    //     }
-    //     const data = await response.json();
-    //     console.log(data);
-    //     posts.value = data.posts;
-    // } catch (error) {
-    //     console.error("Error fetching posts:", error);
-    // }
-
-    posts.value = [
-    {
-        id: 1,
-        user: {
-            user_id: 1,
-            profile_photo: 'test.jpg',
-            username: 'qxeenolight'
-        },
-        photo: 'test.jpg',
-        caption: 'This is a post caption',
-        likes: 10,
-        created_on: '2024-04-19'
-    },
-    {
-        id: 1,
-        user: {
-            user_id: 1,
-            profile_photo: 'test.jpg',
-            username: 'qxeenolight'
-        },
-        photo: 'test.jpg',
-        caption: 'This is a post caption',
-        likes: 10,
-        created_on: '2024-04-19'
-    },
-    {
-        id: 1,
-        user: {
-            user_id: 1,
-            profile_photo: 'test.jpg',
-            username: 'qxeenolight'
-        },
-        photo: 'test.jpg',
-        caption: 'This is a post caption',
-        likes: 10,
-        created_on: '2024-04-19'
-    },
-    {
-        id: 1,
-        user: {
-            user_id: 1,
-            profile_photo: 'test.jpg',
-            username: 'qxeenolight'
-        },
-        photo: 'test.jpg',
-        caption: 'This is a post caption',
-        likes: 10,
-        created_on: '2024-04-19'
+    try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`/api/v1/users/${router.currentRoute.value.params.id}/posts`, {
+            method: 'GET',
+            headers: { 
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json' 
+            }
+        });
+        const data = await response.json();
+        posts.value = data.posts;
+        postCount.value = data.posts.length;
+        console.log("Post Fetched")
+    } catch (error) {
+        console.error("Error fetching posts:", error);
     }
-    ];
 };
 
 const fetchUser = async () => {
     try {
         const token = localStorage.getItem('token');
-        console.log(router.currentRoute.value.params.id)
         const response = await fetch(`/api/v1/users/${router.currentRoute.value.params.id}`, {
             headers: {
                 'Authorization': `Bearer ${token}`
@@ -184,7 +135,6 @@ const fetchUser = async () => {
         }
         const data = await response.json();
         user.value = data;
-        console.log(data);
     } catch (error) {
         console.error("Error fetching user:", error);
     }
@@ -233,7 +183,7 @@ function applyFlexStyles() {
                     <div class="likes-follows">
                         <div :class="{ 'item': true, 'align': isOwnProfile }">
                             <!-- adjust to similar logic like the follow -->
-                            <p class="number">7</p>
+                            <p class="number">{{ postCount }}</p>
                             <p class="title">Posts</p>
                         </div>
                         <div :class="{ 'item': true, 'align': isOwnProfile }">
@@ -358,7 +308,7 @@ function applyFlexStyles() {
 
 .profile-posts .post-media {
     width: 100%;
-    height: 100%;
+    height: 350px;
     overflow: hidden; 
 }
 

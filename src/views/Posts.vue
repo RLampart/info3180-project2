@@ -1,53 +1,128 @@
 <script setup>
-import { ref } from "vue";
+import { ref, onMounted  } from "vue";
+import { useRouter } from 'vue-router';
+import { userId } from './user';
 
-let message = ref("Posts View")
-// /api/v1/users/<int:user_id>/posts
+const router = useRouter();
+let csrf_token = ref("");
+var feedback = ref(false);
+let messages = ref([]);
+let category = ref("alert alert-danger");
 
+function getCsrfToken() {
+    fetch('/api/v1/csrf-token').then((response) => response.json())
+    .then((data) => {
+        csrf_token.value = data.csrf_token;
+    })
+};
 
+function newPost(){
+    feedback.value = false;
+    const token = localStorage.getItem('token');
+    let postForm = document.getElementById('postForm');
+    let formdata = new FormData(postForm);
+
+    fetch(`/api/v1/users/${userId['_value']}/posts`, {
+        method: 'POST',
+        body: formdata,
+        headers: { 
+            'X-CSRFToken': csrf_token.value,
+            'Authorization': `Bearer ${token}`,
+        }
+    })
+    .then(function (response) {
+        return response.json();
+    })
+    .then(function (data) {
+        // display a success message
+        postForm.reset();
+
+        category = "alert alert-success";
+        messages =  [data["message"]];
+        feedback.value = true; 
+
+        setTimeout(() => {
+            feedback.value = false;
+            router.push('/posts/new');
+        }, 2000);
+
+    }).catch(function (error) {
+        messages = error;
+        postForm.reset();
+        category = "alert alert-danger";
+        messages = error;
+        feedback.value = true;  
+    });
+}
+
+onMounted(() => {
+    getCsrfToken();
+}); 
 </script>
 
 <template>
-    <div class="container">
-        <h3>Register</h3>
-        <form id='userForm' @submit.prevent="saveUser" method="post" enctype="multipart/form-data">
-            <div class="form-group col-md-10">
-                <label for="username" class="form-label">Username</label>
-                <input type="text" name="username" id="username" class="form-control" />
-            </div>
-            <div class="form-group col-md-10">
-                <label for="password" class="form-label">Password</label>
-                <input type = "password" name="password" id="password" class="form-control" />
-            </div>  
-            <div class="form-group col-md-10">
-                <label for="first_name" class="form-label">First Name</label>
-                <input type = "text" name="first_name" id="first_name" class="form-control" />
-            </div>  
-            <div class="form-group col-md-10">
-                <label for="last_name" class="form-label">Last Name</label>
-                <input type = "text" name="last_name" id="last_name" class="form-control"/>
-            </div>  
-            <div class="form-group col-md-10">
-                <label for="email" class="form-label">Email</label>
-                <input type = "email" name="email" id="email" class="form-control"/>
-            </div>  
-            <div class="form-group col-md-10">
-                <label for="location" class="form-label">Location</label>
-                <input type = "text" name="location" id="location" class="form-control"/>
-            </div>  
-            <div class="form-group col-md-10">
-                <label for="bio" class="form-label">Biography</label>
-                <textarea name="bio" id="bio" class="form-control"></textarea>
-            </div>  
-            <div class="form-group col-md-10">
-                <label for="photo" class="form-label">Profile Photo</label>
+    <div v-if = "feedback" :class="category">
+        <ol>
+            <li v-for="message in messages">{{ message }}</li>
+        </ol>   
+    </div>
+
+    <div class = 'newPost-container container'>
+        <h4>New Post</h4>
+        <form class='postform shadow' id='postForm' @submit.prevent="newPost" method="POST">
+            <div class="form-group col-md-12">
+                <label for="photo" class="form-label">Photo</label>
                 <input type="file" name="photo" id="photo" class="form-control" />
             </div>
-            <button type="submit" name="submit" class="btn btn-success">Register</button>
+            <div class="form-group col-md-12 caption">
+                <label for="caption" class="form-label">Caption</label>
+                <textarea name="caption" id="caption" class="form-control" placeholder="Write a caption..."></textarea>
+            </div>  
+
+            <button type="submit" name="submit" class="btn btn-success">Submit</button>
         </form>
     </div>
 </template>
 
-<style>
+<style scoped>
+.newPost-container {
+    width: 30%;
+}
 
+h4 {
+    padding-bottom: 10px;
+}
+
+.postform {
+    flex-direction: column;
+    height: auto;
+    background-color: white;
+    padding: 30px;
+}
+
+.form-group{
+    padding: 10px;
+}
+
+.form-control{
+    align-self: center;
+    justify-self: center;
+}
+
+.form-label{
+    font-weight: bold;
+}
+
+.caption {
+    padding-top: 20px;
+}
+
+button.btn{
+    margin: 0 auto;
+    margin-top: 5%;
+    display: block;
+    width:100%;
+    border: none;
+    background-color: #70bb1f;
+}
 </style>
