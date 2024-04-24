@@ -74,14 +74,14 @@ var json = JSON.stringify(object);
     </ol>   
    </div>
 
-  <div class = container>
+  <div class = 'login-container container'>
     <h3>Login</h3>
       <form id='loginForm' @submit.prevent="login" method="post">
-      <div class="form-group col-md-10">
+      <div class="form-group col-md-12">
       <label for="username" class="form-label">Username</label>
       <input type="text" name="username" id="username" class="form-control" />
       </div>
-      <div class="form-group col-md-10">
+      <div class="form-group col-md-12">
       <label for="password" class="form-label">Password</label>
       <input type = "password" name="password" id="password" class="form-control" />
       </div>  
@@ -92,7 +92,7 @@ var json = JSON.stringify(object);
 </template>
 
 <style>
-.container{
+.login-container{
   flex-direction: column;
   height: auto;
 
@@ -100,15 +100,18 @@ var json = JSON.stringify(object);
 form{
   background-color: white;
   padding: 30px;
-  width: 50%;
+  
 }
 .form-group{
   padding: 10px;
-  padding-left: 30px;
 }
 .form-control{
   align-self: center;
   justify-self: center;
+}
+
+.login-container > #password{
+  margin-bottom: 10%;
 }
 .form-label{
   font-weight: bold;
