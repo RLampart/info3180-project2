@@ -1,6 +1,7 @@
 <script setup>
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
+import { loggedIn } from '../views/user';
 
 const router = useRouter();
 let message = ref("Share photos of your favourite moments with friends, family and the world.")
@@ -12,6 +13,26 @@ function goToRegister() {
 function goToLogin() {
   router.push({ path: '/login' });
 }
+
+const emitLogout = () => {
+  const event = new Event('logout');
+  document.dispatchEvent(event);
+  router.push('/');
+};
+
+onMounted(() => {
+  applyFlexStyles();
+});
+
+function applyFlexStyles() {
+  const container = document.querySelector('.container');
+  if (container) {
+    container.style.display = 'flex';
+    container.style.flexDirection = 'row';
+  }
+}
+
+
 </script>
 
 <template>
@@ -25,22 +46,20 @@ function goToLogin() {
         <p>{{ message }}</p>
         <div class="button">
           <button type="button" class="btn bg-success" @click="goToRegister">Register</button>
-          <button type="button" class="btn bg-primary" @click="goToLogin">Login</button>
+          <button v-if="!loggedIn" type="button" class="btn bg-primary" @click="goToLogin">Login</button>
+          <button v-if="loggedIn" type="button" class="btn bg-primary" @click="emitLogout">Logout</button>
+
         </div>
       </div>
     </div>
 </template>
 
-<style>
-body {
-  background-color: #F5EFE6;
-}
-
+<style scoped>
 .container {
-  display: flex;
   justify-content: center;
-  align-items: center;
-  height: 90vh;
+  align-items: left;
+  height: 80vh;
+  padding-top: 50px;
 }
 
 .image-container,
@@ -61,8 +80,6 @@ body {
   font-size: 22px;
 }
 
-/* @import url('https://fonts.googleapis.com/css2?family=Dancing+Script&display=swap'); */
-
 .text-container h1 {
   font-family: 'Brush Script MT', cursive;
   font-weight: bold;
@@ -71,29 +88,6 @@ body {
 
 .icon2 {
   font-size: 40px;
-}
-
-.button {
-  padding-top: 50px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.btn {
-  width: 250px;
-  height: 45px;
-  color: white;
-  font-size: 18px;
-}
-
-.btn:hover {
-  color: white;
-}
-
-.btn:not(:disabled):not(.disabled):active,
-.btn:not(:disabled):not(.disabled).active {
-  color: white !important;
 }
 
 .cshadow {

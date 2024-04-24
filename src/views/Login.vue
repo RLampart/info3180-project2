@@ -1,10 +1,12 @@
 <script setup>
 import { ref, onMounted  } from "vue";
-import { useRoute, useRouter } from 'vue-router';
+import { useRouter } from 'vue-router';
+import { updateUserId, loggedIn } from './user';
+
 let csrf_token = ref("");
 var feedback = ref(false);
 const router = useRouter()
-let messages = "";
+let messages = ref([]);
 let category = ref("alert alert-danger");
 function getCsrfToken() {
 fetch('/api/v1/csrf-token').then((response) => response.json())
@@ -40,7 +42,13 @@ var json = JSON.stringify(object);
        category = "alert alert-success";
        messages = [data["message"]];
        localStorage.setItem("token",data['token']);
-       router.push('/explore');
+       loggedIn.value = true;
+       updateUserId(data.id);
+
+      // Delay Switching Route to Display message
+      setTimeout(() => {
+        router.push('/explore');
+      }, 500);
        //redirect
     }else{
       category = "alert alert-danger";
