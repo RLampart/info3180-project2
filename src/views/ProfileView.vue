@@ -56,6 +56,7 @@ const follow = () => {
         if (response.ok) {
             fetchFollowers();
             isFollowed.value = true;
+            followText.value = 'Following';
             return response.json();
         } else {
             throw new Error('Failed to follow user:', response.statusText);
@@ -85,6 +86,7 @@ const checkIfFollowing = async () => {
             const data = await response.json();
             if (data.is_following) {
                 isFollowed.value = true;
+                followText.value = 'Following';
             }
         } else {
             throw new Error('Failed to check if following:', response.statusText);
@@ -239,7 +241,7 @@ function applyFlexStyles() {
                             <p class="title">Followers</p>
                         </div>
                     </div>
-                    <button v-if="!isOwnProfile" class="btn follow-btn bg-primary" :disabled="isFollowed" @click="follow">{{ followText }}</button>
+                    <button v-if="!isOwnProfile" class="btn" :class="{'follow-btn': isFollowed, 'bg-primary': !isFollowed}" :disabled="isFollowed" @click="follow">{{ followText }}</button>
                 </div>
             </div>
             <div class="profile-posts">
@@ -339,6 +341,11 @@ function applyFlexStyles() {
 
 .profile .item .title {
     color: rgb(160, 160, 160);
+}
+
+.follow-btn {
+    background-color: green;
+    color: rgb(255, 255, 255);
 }
 
 /* ----Post Section ---- */

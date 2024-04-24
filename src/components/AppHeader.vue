@@ -18,7 +18,6 @@
           <ul class="navbar-nav ms-auto">
             <li class="nav-item">
               <RouterLink class="nav-link active" to="/">Home</RouterLink>
-              <!-- <a href="/" class="nav-link active">Home</a> -->
             </li>
             <li class="nav-item">
               <RouterLink class="nav-link active" to="/explore">Explore</RouterLink>
@@ -28,7 +27,7 @@
             </li>
             <li class="nav-item">
               <RouterLink v-if="!loggedIn" class="nav-link active" to="/login">Login</RouterLink>
-              <RouterLink v-if="loggedIn" class="nav-link active" @click="logout" to="/">Logout</RouterLink>
+              <RouterLink v-if="loggedIn" class="nav-link active" @click="logout" to="/logout">Logout</RouterLink>
             </li>
           </ul>
         </div>
