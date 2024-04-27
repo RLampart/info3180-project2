@@ -36,16 +36,10 @@ function newPost(){
     .then(function (data) {
         // display a success message
         postForm.reset();
-        console.log(data);
+
+        category = "alert alert-success";
+        messages =  [data["message"]];
         feedback.value = true; 
-        
-        if (data['message'] != undefined){
-            category = "alert alert-success";
-            messages = [data["message"]];
-        }else{
-            category = "alert alert-danger";
-            messages = data;
-        }feedback.value = true; 
 
         setTimeout(() => {
             feedback.value = false;
@@ -53,7 +47,7 @@ function newPost(){
         }, 2000);
 
     }).catch(function (error) {
-        console.log(error);
+        messages = error;
         postForm.reset();
         category = "alert alert-danger";
         messages = error;

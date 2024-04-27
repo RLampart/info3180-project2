@@ -21,7 +21,7 @@ class Register(FlaskForm):
 
 class NewPost(FlaskForm):
     photo = FileField('Upload Poster', validators=[
-        FileRequired(message='Please upload a photo'),
+        FileRequired(message='Please upload movie poster'),
         FileAllowed(['jpg', 'png'], message='Only JPEG and PNG images are allowed.')
     ])
     caption = TextAreaField('Caption', validators=[InputRequired()])
