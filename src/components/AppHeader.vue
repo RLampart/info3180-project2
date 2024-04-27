@@ -19,7 +19,7 @@
             <li class="nav-item">
               <RouterLink class="nav-link active" to="/">Home</RouterLink>
             </li>
-            <li class="nav-item">
+            <li class="nav-item" v-if="loggedIn">
               <RouterLink class="nav-link active" to="/explore">Explore</RouterLink>
             </li>
             <li class="nav-item" v-if="loggedIn">
